@@ -16,7 +16,7 @@ Real-world examples of similar systems using microservices:
 
 
 ## Service Boundaries
-![Scheme](./images/scheme2.png)
+![Scheme](./images/scheme3.png)
 
 * **Stock Data Service:** Fetches historical stock data from an external API. This service is essential as it provides the raw data needed for predictions.
 * **Prediction & User Management Service::**  Manages both user profiles (registration, login) via MongoDB and analyzes the fetched stock data to provide predictions (buy, sell,) using machine learning methods. 
@@ -35,14 +35,14 @@ Real-world examples of similar systems using microservices:
    - **Framework**: Flask
    - **External API**: Alpha Vantage (for stock data)
    - **Cache**: Redis (for caching stock data)
-   - **Purpose**: Fetches and caches historical stock data.
+   - **Purpose**: Purpose: Fetches and caches historical stock data, communicates with the API Gateway via gRPC.
 
 3. **Prediction Service**:
    - **Language**: Python
    - **Framework**: Flask
    - **ML Library**: Scikit-learn (for predictions)
    - **Database**: PostgreSQL (for storing predictions)
-   - **Purpose**: Analyzes stock data, generates predictions, and sends real-time updates via WebSocket.
+   - **Purpose**: Purpose: Analyzes stock data, generates predictions, and sends real-time updates via gRPC to the API Gateway.
 
 4. **WebSocket**:
    - **Technology**:  Node.js with Socket.IO (integrated into the API Gateway)
