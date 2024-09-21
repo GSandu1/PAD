@@ -16,7 +16,7 @@ Real-world examples of similar systems using microservices:
 
 
 ## Service Boundaries
-![Scheme](./images/scheme3.png)
+![Scheme](./images/scheme4.png)
 
 * **Stock Data Service:** Fetches historical stock data from an external API. This service is essential as it provides the raw data needed for predictions.
 * **Prediction & User Management Service::**  Manages both user profiles (registration, login) via MongoDB and analyzes the fetched stock data to provide predictions (buy, sell,) using machine learning methods. 
@@ -66,6 +66,17 @@ Real-world examples of similar systems using microservices:
     /api/stocks/cache/clear - Clears the cache for stock data.
 
 ```
+
+* **WebSocket Endpoints:**
+
+```
+    /websocket/stock/{symbol} - Subscribes users to real-time updates for a specific stock symbol.
+    /websocket/stocks/all - Subscribes users to real-time updates for all stocks.
+    /websocket/user/{userId}/notifications - Subscribes users to personalized notifications, such as stock alerts or account updates.
+
+
+```
+
 ## Prediction & User Management Service
 
 **POST /api/users/register**
