@@ -1,0 +1,9 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+node_modules/
+venv/
+.env
+__pycache__/
+*.pyc
+*.log
