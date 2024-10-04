@@ -3,10 +3,12 @@ import psycopg2
 import redis
 import hashlib
 import jwt
+import requests
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'  
-
+API_GATEWAY_URL = "http://localhost:3000"
 
 conn = psycopg2.connect(
     database="users_db",
@@ -87,6 +89,33 @@ def update_user_profile():
 @app.route('/status', methods=['GET'])
 def status():
     return jsonify({"message": "User Management Service is running!"})
+
+
+# Endpoint for Buy Action
+@app.route('/api/users/buy', methods=['POST'])
+def buy_stock():
+    data = request.json
+    transaction_data = {
+        "user_id": data["user_id"],
+        "operation": "buy",
+        "quantity": data["quantity"],
+        "currency": data["currency"]
+    }
+    response = requests.post(f"{API_GATEWAY_URL}/api/transactions/store", json=transaction_data)
+    return jsonify(response.json()), response.status_code
+
+# Endpoint for Sell Action
+@app.route('/api/users/sell', methods=['POST'])
+def sell_stock():
+    data = request.json
+    transaction_data = {
+        "user_id": data["user_id"],
+        "operation": "sell",
+        "quantity": data["quantity"],
+        "currency": data["currency"]
+    }
+    response = requests.post(f"{API_GATEWAY_URL}/api/transactions/store", json=transaction_data)
+    return jsonify(response.json()), response.status_code
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5002)

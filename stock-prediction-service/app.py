@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import requests
 from pymongo import MongoClient
 import joblib
@@ -12,6 +12,7 @@ client = MongoClient('mongodb://localhost:27017/')
 db = client['stock_database']
 stock_collection = db['stocks']
 prediction_collection = db['predictions']
+transaction_history_collection = db['transaction_history']
 
 # Alpha Vantage API configuration
 API_KEY = 'PQMIDA6PVK1S96NQ'  
@@ -59,6 +60,26 @@ def get_stock_data(symbol):
 def status():
     return jsonify({"message": "Unified Stock Data & Prediction Service is running!"})
 
+
+@app.route('/api/stocks/<symbol>/details', methods=['GET'])
+def get_stock_details(symbol):
+    # Fetch stock data from MongoDB
+    stock_data = stock_collection.find_one({"symbol": symbol}, sort=[("timestamp", -1)])
+
+    if not stock_data:
+        return jsonify({"error": "Stock data not available"}), 404
+
+    # Prepare the response
+    stock_details = {
+        "id": str(stock_data["_id"]),
+        "symbol": stock_data["symbol"],
+        "price": stock_data["price"],
+        "currency": stock_data["currency"]
+    }
+
+    return jsonify(stock_details)
+
+
 # API endpoint to fetch stock data and make predictions
 @app.route('/api/predict/<symbol>', methods=['GET'])
 def predict_stock(symbol):
@@ -74,10 +95,14 @@ def predict_stock(symbol):
     # Use the machine learning model to make a prediction
     prediction = model.predict(input_data)[0]
 
+    # Determine "buy" or "sell" based on prediction value
+    action = "buy" if prediction > 0 else "sell"
+
     # Construct prediction data in desired format
     prediction_data = {
         "symbol": symbol,
         "prediction": prediction,
+        "action": action,
         "timestamp": stock_data["timestamp"]
     }
 
@@ -88,6 +113,23 @@ def predict_stock(symbol):
     prediction_data["_id"] = str(inserted_data.inserted_id)
 
     return jsonify(prediction_data)
+
+# Endpoint to store transaction details
+@app.route('/api/transactions/store', methods=['POST'])
+def store_transaction():
+    try:
+        transaction_data = request.json
+        print("Received transaction data:", transaction_data)
+        
+        # Force MongoDB to create collection by inserting sample data if empty
+        if transaction_history_collection.count_documents({}) == 0:
+            transaction_history_collection.insert_one({"test_key": "test_value"})
+        
+        transaction_history_collection.insert_one(transaction_data)
+        return jsonify({"message": "Transaction stored successfully"}), 201
+    except Exception as e:
+        print(f"Error in store_transaction: {e}")
+        return jsonify({"error": "Internal Server Error"}), 500
 
 
 if __name__ == '__main__':

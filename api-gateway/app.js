@@ -2,10 +2,10 @@ const express = require('express');
 const axios = require('axios');
 const app = express();
 const port = 3000;
-const Timeout = 5000; // Timeout set to 1 second (1000 milliseconds)
-
+const Timeout = 1; // Timeout set to 1 second (1000 milliseconds)
 // Middleware for JSON parsing
 app.use(express.json());
+
 
 // Route to Prediction Endpoint in Stock-Prediction Service
 app.get('/api/predict/:symbol', async (req, res) => {
@@ -26,7 +26,7 @@ app.get('/api/predict/:symbol', async (req, res) => {
 // Route to Stock Data History in Stock-Prediction Service
 app.get('/api/stocks/history', async (req, res) => {
     try {
-        const response = await axios.get('http://localhost:5001/api/stocks/history', { timeout: Timeout });
+        const response = await axios.get('http://localhost:5000/api/stocks/history', { timeout: Timeout });
         res.json(response.data);
     } catch (error) {
         if (error.code === 'ECONNABORTED') {
@@ -42,7 +42,7 @@ app.get('/api/stocks/history', async (req, res) => {
 // Cache Clear Route for Stock Data Service
 app.post('/api/stocks/cache/clear', async (req, res) => {
     try {
-        const response = await axios.post('http://localhost:5001/api/stocks/cache/clear', req.body, { timeout: Timeout });
+        const response = await axios.post('http://localhost:5000/api/stocks/cache/clear', req.body, { timeout: Timeout });
         res.json(response.data);
     } catch (error) {
         if (error.code === 'ECONNABORTED') {
@@ -124,6 +124,55 @@ app.post('/api/users/profile/update', async (req, res) => {
         }
     }
 });
+
+app.post('/api/users/buy', async (req, res) => {
+    try {
+        const response = await axios.post('http://localhost:5002/api/users/buy', req.body, { timeout: Timeout });
+        res.json(response.data);
+    } catch (error) {
+        if (error.code === 'ECONNABORTED') {
+            res.status(504).json({ error: 'User buy request timed out' });
+        } else if (error.response) {
+            res.status(error.response.status).json({ error: error.response.data });
+        } else {
+            res.status(500).json({ error: 'User buy request error' });
+        }
+    }
+});
+
+app.post('/api/users/sell', async (req, res) => {
+    try {
+        const response = await axios.post('http://localhost:5002/api/users/sell', req.body, { timeout: Timeout });
+        res.json(response.data);
+    } catch (error) {
+        if (error.code === 'ECONNABORTED') {
+            res.status(504).json({ error: 'User sell request timed out' });
+        } else if (error.response) {
+            res.status(error.response.status).json({ error: error.response.data });
+        } else {
+            res.status(500).json({ error: 'User sell request error' });
+        }
+    }
+});
+
+
+// Route to store transaction details in Stock-Prediction Service
+app.post('/api/transactions/store', async (req, res) => {
+    console.log("Received data at API Gateway:", req.body);  // Add this line
+    try {
+        const response = await axios.post('http://localhost:5000/api/transactions/store', req.body, { timeout: Timeout });
+        res.json(response.data);
+    } catch (error) {
+        if (error.code === 'ECONNABORTED') {
+            res.status(504).json({ error: 'Transaction storage request timed out' });
+        } else if (error.response) {
+            res.status(error.response.status).json({ error: error.response.data });
+        } else {
+            res.status(500).json({ error: 'Error storing transaction data' });
+        }
+    }
+});
+
 
 // Status endpoint for Gateway
 app.get('/status', (req, res) => {
