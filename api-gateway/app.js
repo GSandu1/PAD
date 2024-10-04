@@ -2,10 +2,30 @@ const express = require('express');
 const axios = require('axios');
 const app = express();
 const port = 3000;
-const Timeout = 1; // Timeout set to 1 second (1000 milliseconds)
+const Timeout = 5000; // Timeout set to 5 seconds (5000 milliseconds)
+
+// Concurrency limit settings
+const MAX_CONCURRENT_TASKS = 1; 
+let currentTasks = 0;
+
 // Middleware for JSON parsing
 app.use(express.json());
 
+// Concurrency Limiter Middleware
+function concurrencyLimiter(req, res, next) {
+    if (currentTasks >= MAX_CONCURRENT_TASKS) {
+        res.status(429).json({ error: 'Too many concurrent requests' });
+    } else {
+        currentTasks++;
+        res.on('finish', () => {
+            currentTasks--;
+        });
+        next();
+    }
+}
+
+// Apply the concurrency limiter middleware to all routes
+app.use(concurrencyLimiter);
 
 // Route to Prediction Endpoint in Stock-Prediction Service
 app.get('/api/predict/:symbol', async (req, res) => {
@@ -16,7 +36,7 @@ app.get('/api/predict/:symbol', async (req, res) => {
         if (error.code === 'ECONNABORTED') {
             res.status(504).json({ error: 'Prediction Service request timed out' });
         } else if (error.response) {
-            res.status(error.response.status).json({ error: error.response.data });
+            res.status(error.response.status).json(error.response.data);
         } else {
             res.status(500).json({ error: 'Prediction Service error' });
         }
@@ -32,7 +52,7 @@ app.get('/api/stocks/history', async (req, res) => {
         if (error.code === 'ECONNABORTED') {
             res.status(504).json({ error: 'Stock Data Service request timed out' });
         } else if (error.response) {
-            res.status(error.response.status).json({ error: error.response.data });
+            res.status(error.response.status).json(error.response.data);
         } else {
             res.status(500).json({ error: 'Stock Data Service error' });
         }
@@ -48,7 +68,7 @@ app.post('/api/stocks/cache/clear', async (req, res) => {
         if (error.code === 'ECONNABORTED') {
             res.status(504).json({ error: 'Cache Clear request timed out' });
         } else if (error.response) {
-            res.status(error.response.status).json({ error: error.response.data });
+            res.status(error.response.status).json(error.response.data);
         } else {
             res.status(500).json({ error: 'Error clearing stock data cache' });
         }
@@ -64,7 +84,7 @@ app.post('/api/users/register', async (req, res) => {
         if (error.code === 'ECONNABORTED') {
             res.status(504).json({ error: 'User registration request timed out' });
         } else if (error.response) {
-            res.status(error.response.status).json({ error: error.response.data });
+            res.status(error.response.status).json(error.response.data);
         } else {
             res.status(500).json({ error: 'User registration error' });
         }
@@ -80,7 +100,7 @@ app.post('/api/users/login', async (req, res) => {
         if (error.code === 'ECONNABORTED') {
             res.status(504).json({ error: 'User login request timed out' });
         } else if (error.response) {
-            res.status(error.response.status).json({ error: error.response.data });
+            res.status(error.response.status).json(error.response.data);
         } else {
             res.status(500).json({ error: 'User login error' });
         }
@@ -99,7 +119,7 @@ app.get('/api/users/profile', async (req, res) => {
         if (error.code === 'ECONNABORTED') {
             res.status(504).json({ error: 'User profile retrieval request timed out' });
         } else if (error.response) {
-            res.status(error.response.status).json({ error: error.response.data });
+            res.status(error.response.status).json(error.response.data);
         } else {
             res.status(500).json({ error: 'Error fetching user profile' });
         }
@@ -118,13 +138,14 @@ app.post('/api/users/profile/update', async (req, res) => {
         if (error.code === 'ECONNABORTED') {
             res.status(504).json({ error: 'User profile update request timed out' });
         } else if (error.response) {
-            res.status(error.response.status).json({ error: error.response.data });
+            res.status(error.response.status).json(error.response.data);
         } else {
             res.status(500).json({ error: 'Error updating user profile' });
         }
     }
 });
 
+// User Buy Route
 app.post('/api/users/buy', async (req, res) => {
     try {
         const response = await axios.post('http://localhost:5002/api/users/buy', req.body, { timeout: Timeout });
@@ -133,13 +154,14 @@ app.post('/api/users/buy', async (req, res) => {
         if (error.code === 'ECONNABORTED') {
             res.status(504).json({ error: 'User buy request timed out' });
         } else if (error.response) {
-            res.status(error.response.status).json({ error: error.response.data });
+            res.status(error.response.status).json(error.response.data);
         } else {
             res.status(500).json({ error: 'User buy request error' });
         }
     }
 });
 
+// User Sell Route
 app.post('/api/users/sell', async (req, res) => {
     try {
         const response = await axios.post('http://localhost:5002/api/users/sell', req.body, { timeout: Timeout });
@@ -148,17 +170,16 @@ app.post('/api/users/sell', async (req, res) => {
         if (error.code === 'ECONNABORTED') {
             res.status(504).json({ error: 'User sell request timed out' });
         } else if (error.response) {
-            res.status(error.response.status).json({ error: error.response.data });
+            res.status(error.response.status).json(error.response.data);
         } else {
             res.status(500).json({ error: 'User sell request error' });
         }
     }
 });
 
-
 // Route to store transaction details in Stock-Prediction Service
 app.post('/api/transactions/store', async (req, res) => {
-    console.log("Received data at API Gateway:", req.body);  // Add this line
+    console.log("Received data at API Gateway:", req.body);
     try {
         const response = await axios.post('http://localhost:5000/api/transactions/store', req.body, { timeout: Timeout });
         res.json(response.data);
@@ -166,13 +187,12 @@ app.post('/api/transactions/store', async (req, res) => {
         if (error.code === 'ECONNABORTED') {
             res.status(504).json({ error: 'Transaction storage request timed out' });
         } else if (error.response) {
-            res.status(error.response.status).json({ error: error.response.data });
+            res.status(error.response.status).json(error.response.data);
         } else {
             res.status(500).json({ error: 'Error storing transaction data' });
         }
     }
 });
-
 
 // Status endpoint for Gateway
 app.get('/status', (req, res) => {
