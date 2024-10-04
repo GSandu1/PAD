@@ -5,7 +5,7 @@ const port = 3000;
 const Timeout = 5000; // Timeout set to 5 seconds (5000 milliseconds)
 
 // Concurrency limit settings
-const MAX_CONCURRENT_TASKS = 1; 
+const MAX_CONCURRENT_TASKS = 5; 
 let currentTasks = 0;
 
 // Middleware for JSON parsing
@@ -190,6 +190,23 @@ app.post('/api/transactions/store', async (req, res) => {
             res.status(error.response.status).json(error.response.data);
         } else {
             res.status(500).json({ error: 'Error storing transaction data' });
+        }
+    }
+});
+
+// New Route to handle /api/stocks/:symbol/details
+app.get('/api/stocks/:symbol/details', async (req, res) => {
+    const symbol = req.params.symbol;
+    try {
+        const response = await axios.get(`http://localhost:5000/api/stocks/${symbol}/details`, { timeout: Timeout });
+        res.json(response.data);
+    } catch (error) {
+        if (error.code === 'ECONNABORTED') {
+            res.status(504).json({ error: 'Stock Data Service request timed out' });
+        } else if (error.response) {
+            res.status(error.response.status).json(error.response.data);
+        } else {
+            res.status(500).json({ error: 'Error retrieving stock details' });
         }
     }
 });
