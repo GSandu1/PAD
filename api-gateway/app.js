@@ -30,7 +30,7 @@ app.use(concurrencyLimiter);
 // Route to Prediction Endpoint in Stock-Prediction Service
 app.get('/api/predict/:symbol', async (req, res) => {
     try {
-        const response = await axios.get(`http://localhost:5000/api/predict/${req.params.symbol}`, { timeout: Timeout });
+        const response = await axios.get(`http://stock-prediction-service:5000/api/predict/${req.params.symbol}`, { timeout: Timeout });
         res.json(response.data);
     } catch (error) {
         if (error.code === 'ECONNABORTED') {
@@ -46,7 +46,7 @@ app.get('/api/predict/:symbol', async (req, res) => {
 // Route to Stock Data History in Stock-Prediction Service
 app.get('/api/stocks/history', async (req, res) => {
     try {
-        const response = await axios.get('http://localhost:5000/api/stocks/history', { timeout: Timeout });
+        const response = await axios.get('http://stock-prediction-service:5000/api/stocks/history', { timeout: Timeout });
         res.json(response.data);
     } catch (error) {
         if (error.code === 'ECONNABORTED') {
@@ -62,7 +62,7 @@ app.get('/api/stocks/history', async (req, res) => {
 // Cache Clear Route for Stock Data Service
 app.post('/api/stocks/cache/clear', async (req, res) => {
     try {
-        const response = await axios.post('http://localhost:5000/api/stocks/cache/clear', req.body, { timeout: Timeout });
+        const response = await axios.post('http://stock-prediction-service:5000/api/stocks/cache/clear', req.body, { timeout: Timeout });
         res.json(response.data);
     } catch (error) {
         if (error.code === 'ECONNABORTED') {
@@ -78,7 +78,8 @@ app.post('/api/stocks/cache/clear', async (req, res) => {
 // User Registration in User Management Service
 app.post('/api/users/register', async (req, res) => {
     try {
-        const response = await axios.post('http://localhost:5002/api/users/register', req.body, { timeout: Timeout });
+        // Use the service name defined in docker-compose.yml
+        const response = await axios.post('http://user-management-service:5002/api/users/register', req.body, { timeout: Timeout });
         res.json(response.data);
     } catch (error) {
         if (error.code === 'ECONNABORTED') {
@@ -91,10 +92,11 @@ app.post('/api/users/register', async (req, res) => {
     }
 });
 
+
 // User Login in User Management Service
 app.post('/api/users/login', async (req, res) => {
     try {
-        const response = await axios.post('http://localhost:5002/api/users/login', req.body, { timeout: Timeout });
+        const response = await axios.post('http://user-management-service:5002/api/users/login', req.body, { timeout: Timeout });
         res.json(response.data);
     } catch (error) {
         if (error.code === 'ECONNABORTED') {
@@ -110,7 +112,7 @@ app.post('/api/users/login', async (req, res) => {
 // User Profile Retrieval in User Management Service
 app.get('/api/users/profile', async (req, res) => {
     try {
-        const response = await axios.get('http://localhost:5002/api/users/profile', {
+        const response = await axios.get('http://user-management-service:5002/api/users/profile', {
             headers: { 'Authorization': req.headers.authorization },
             timeout: Timeout
         });
@@ -129,7 +131,7 @@ app.get('/api/users/profile', async (req, res) => {
 // User Profile Update in User Management Service
 app.post('/api/users/profile/update', async (req, res) => {
     try {
-        const response = await axios.post('http://localhost:5002/api/users/profile/update', req.body, {
+        const response = await axios.post('http://user-management-service:5002/api/users/profile/update', req.body, {
             headers: { 'Authorization': req.headers.authorization },
             timeout: Timeout
         });
@@ -148,7 +150,7 @@ app.post('/api/users/profile/update', async (req, res) => {
 // User Buy Route
 app.post('/api/users/buy', async (req, res) => {
     try {
-        const response = await axios.post('http://localhost:5002/api/users/buy', req.body, { timeout: Timeout });
+        const response = await axios.post('http://user-management-service:5002/api/users/buy', req.body, { timeout: Timeout });
         res.json(response.data);
     } catch (error) {
         if (error.code === 'ECONNABORTED') {
@@ -164,7 +166,7 @@ app.post('/api/users/buy', async (req, res) => {
 // User Sell Route
 app.post('/api/users/sell', async (req, res) => {
     try {
-        const response = await axios.post('http://localhost:5002/api/users/sell', req.body, { timeout: Timeout });
+        const response = await axios.post('http://user-management-service:5002/api/users/sell', req.body, { timeout: Timeout });
         res.json(response.data);
     } catch (error) {
         if (error.code === 'ECONNABORTED') {
@@ -181,7 +183,7 @@ app.post('/api/users/sell', async (req, res) => {
 app.post('/api/transactions/store', async (req, res) => {
     console.log("Received data at API Gateway:", req.body);
     try {
-        const response = await axios.post('http://localhost:5000/api/transactions/store', req.body, { timeout: Timeout });
+        const response = await axios.post('http://stock-prediction-service:5000/api/transactions/store', req.body, { timeout: Timeout });
         res.json(response.data);
     } catch (error) {
         if (error.code === 'ECONNABORTED') {
@@ -198,7 +200,7 @@ app.post('/api/transactions/store', async (req, res) => {
 app.get('/api/stocks/:symbol/details', async (req, res) => {
     const symbol = req.params.symbol;
     try {
-        const response = await axios.get(`http://localhost:5000/api/stocks/${symbol}/details`, { timeout: Timeout });
+        const response = await axios.get(`http://stock-prediction-service:5000/api/stocks/${symbol}/details`, { timeout: Timeout });
         res.json(response.data);
     } catch (error) {
         if (error.code === 'ECONNABORTED') {

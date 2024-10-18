@@ -1,0 +1,68 @@
+version: '3.8'
+
+networks:
+  app-network:
+    external: true  # Ensure it uses the existing network
+
+services:
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "3000:3000"
+    depends_on:
+      - stock-prediction-service
+      - user-management-service
+    networks:
+      - app-network
+
+  stock-prediction-service:
+    build: ./stock-prediction-service
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+
+  user-management-service:
+    build: ./user-management-service
+    ports:
+      - "5002:5002"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - app-network
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=users_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+volumes:
+  mongo_data:
+  pg_data:
