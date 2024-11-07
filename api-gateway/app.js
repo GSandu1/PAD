@@ -31,8 +31,10 @@ app.use(concurrencyLimiter);
 app.get('/api/predict/:symbol', async (req, res) => {
     try {
         const response = await axios.get(`http://stock-prediction-service:5000/api/predict/${req.params.symbol}`, { timeout: Timeout });
+        console.log(response.data);  // Add this log
         res.json(response.data);
     } catch (error) {
+        console.error('Error:', error);  // Log the error details
         if (error.code === 'ECONNABORTED') {
             res.status(504).json({ error: 'Prediction Service request timed out' });
         } else if (error.response) {
@@ -42,6 +44,7 @@ app.get('/api/predict/:symbol', async (req, res) => {
         }
     }
 });
+
 
 // Route to Stock Data History in Stock-Prediction Service
 app.get('/api/stocks/history', async (req, res) => {

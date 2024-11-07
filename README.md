@@ -16,10 +16,11 @@ Real-world examples of similar systems using microservices:
 
 
 ## Service Boundaries
-![Scheme](./images/scheme5.png)
+![Scheme](./images/scheme_x.png)
+![Scheme](./images/scheme_y.png)
 
-* **Stock Data Service:** Fetches historical stock data from an external API. This service is essential as it provides the raw data needed for predictions.
-* **Prediction & User Management Service::**  Manages both user profiles (registration, login) via MongoDB and analyzes the fetched stock data to provide predictions (buy, sell,) using machine learning methods. 
+* **Stock Prediction Service:** Fetches historical stock data from an external API and Uses a machine learning model to generate "buy" or "sell" signals based on historical stock data.
+* **User Management Service::**  Manages user registration, authentication, and profile information using MongoDB. 
 
 ## Technology Stack and Communication Patterns
 
@@ -50,122 +51,349 @@ Real-world examples of similar systems using microservices:
 
 
 ## Data Management
-* **UPrediction & User Management Service:**
-```
-    /api/users/register - Creates a new user account.
-    /api/users/login - Authenticates a user and returns a session token.
-    /api/users/profile - Retrieves user profile details.
-    /api/predict - Generates stock price predictions based on historical data.
-    /api/users/profile/update - Updates user profile information.
-```
+# Stock Prediction Service
 
-* **Stock Data Service:**
-
-```
-    /api/stocks/history - Retrieves historical stock data for a specific stock symbol.
-    /api/stocks/cache/clear - Clears the cache for stock data.
-
-```
-
-* **WebSocket Endpoints:**
-
-```
-    /websocket/stock/{symbol} - Subscribes users to real-time updates for a specific stock symbol.
-    /websocket/stocks/all - Subscribes users to real-time updates for all stocks.
-    /websocket/user/{userId}/notifications - Subscribes users to personalized notifications, such as stock alerts or account updates.
+### Endpoints:
+- **/api/stocks/<symbol>/details** - Retrieves stock details for the given symbol.
+- **/api/predict/<symbol>** - Generates stock prediction for the given symbol.
+- **/api/transactions/store** - Stores transaction details.
 
 
-```
+### Endpoint: `/api/stocks/<symbol>/details`
+- **Method**: `GET`
+- **Description**: Retrieves stock details for the given symbol.
 
-* **Example WebSocket Message 1: Real-time Stock Price Update**
+**Responses:**
+- **200 OK:**
+    ```json
+    {
+      "id": "string",
+      "symbol": "string",
+      "price": "string",
+      "currency": "string"
+    }
+    ```
+- **404 Not Found:**
+    ```json
+    {
+      "error": "Stock data not available"
+    }
+    ```
 
-```json
-{
-  "type": "stock_price_update",
-  "symbol": "AAPL",
-  "price": 151.75,
-  "timestamp": "2024-09-21T14:23:00Z"
-}
+---
+
+### Endpoint: `/api/predict/<symbol>`
+- **Method**: `GET`
+- **Description**: Generates a stock prediction for the given symbol.
+
+**Responses:**
+- **200 OK:**
+    ```json
+    {
+      "symbol": "string",
+      "prediction": "number",
+      "action": "buy | sell",
+      "timestamp": "string",
+      "_id": "string"
+    }
+    ```
+- **404 Not Found:**
+    ```json
+    {
+      "error": "Stock data not available"
+    }
+    ```
+
+---
+
+### Endpoint: `/api/transactions/store`
+- **Method**: `POST`
+- **Description**: Stores transaction details.
+- **Received Data:**
+    ```json
+    {
+      "user_id": "string",
+      "symbol": "string",
+      "quantity": "number",
+      "action": "buy | sell",
+      "price": "number",
+      "timestamp": "string"
+    }
+    ```
+
+**Responses:**
+- **201 Created:**
+    ```json
+    {
+      "message": "Transaction stored successfully"
+    }
+    ```
+- **500 Internal Server Error:**
+    ```json
+    {
+      "error": "Internal Server Error"
+    }
+    ```
+
+---
+
+# User Management Service
+
+### Endpoints:
+- **/api/users/register** - Registers a new user.
+- **/api/users/login** - Authenticates a user.
+- **/api/users/profile** - Retrieves user profile.
+- **/api/users/profile/update** - Updates user profile.
+- **/api/users/buy** - Processes a stock buy request.
+- **/api/users/sell** - Processes a stock sell request.
+
+---
+
+### Endpoint: `/api/users/register`
+- **Method**: `POST`
+- **Description**: Registers a new user.
+- **Received Data:**
+    ```json
+    {
+      "name": "string",
+      "email": "string",
+      "password": "string"
+    }
+    ```
+
+**Responses:**
+- **201 Created:**
+    ```json
+    {
+      "message": "User registered successfully",
+      "user_id": "string"
+    }
+    ```
+- **400 Bad Request:**
+    ```json
+    {
+      "error": "Invalid input data"
+    }
+    ```
+- **409 Conflict:**
+    ```json
+    {
+      "error": "User already exists"
+    }
+    ```
+
+---
+
+### Endpoint: `/api/users/login`
+- **Method**: `POST`
+- **Description**: Authenticates a user.
+- **Received Data:**
+    ```json
+    {
+      "email": "string",
+      "password": "string"
+    }
+    ```
+
+**Responses:**
+- **200 OK:**
+    ```json
+    {
+      "message": "Login successful",
+      "token": "string"
+    }
+    ```
+- **401 Unauthorized:**
+    ```json
+    {
+      "error": "Invalid credentials"
+    }
+    ```
+- **400 Bad Request:**
+    ```json
+    {
+      "error": "Invalid input data"
+    }
+    ```
+
+---
+
+### Endpoint: `/api/users/profile`
+- **Method**: `GET`
+- **Description**: Retrieves the user's profile.
+- **Headers**: `Authorization: Bearer token`
 
 
+**Responses:**
+- **200 OK:**
+    ```json
+    {
+      "user_id": "string",
+      "name": "string",
+      "email": "string"
+      // Additional profile information
+    }
+    ```
+- **401 Unauthorized:**
+    ```json
+    {
+      "error": "Invalid or missing token"
+    }
+    ```
 
-```
+---
 
-* **Example WebSocket Message 2: Stock Prediction Notification**
+### Endpoint: `/api/users/profile/update`
+- **Method**: `POST`
+- **Description**: Updates the user's profile.
+- **Headers**: `Authorization: Bearer token`
+- **Received Data:**
+    ```json
+    {
+      "name": "string",
+      "email": "string"
+      // Fields to update
+    }
+    ```
 
-```json
-{
-  "type": "prediction_update",
-  "symbol": "AAPL",
-  "prediction": "buy",
-  "timestamp": "2024-09-21T14:24:00Z"
-}
+**Responses:**
+- **200 OK:**
+    ```json
+    {
+      "message": "Profile updated successfully"
+    }
+    ```
+- **400 Bad Request:**
+    ```json
+    {
+      "error": "Invalid input data"
+    }
+    ```
+- **401 Unauthorized:**
+    ```json
+    {
+      "error": "Invalid or missing token"
+    }
+    ```
 
+---
 
+### Endpoint: `/api/users/buy`
+- **Method**: `POST`
+- **Description**: Processes a stock buy request.
+- **Received Data:**
+    ```json
+    {
+      "user_id": "string",
+      "symbol": "string",
+      "quantity": "number"
+      // Additional fields if any
+    }
+    ```
 
-```
+**Responses:**
+- **200 OK:**
+    ```json
+    {
+      "message": "Stock bought successfully",
+      "transaction_id": "string"
+    }
+    ```
+- **400 Bad Request:**
+    ```json
+    {
+      "error": "Invalid input data"
+    }
+    ```
+- **500 Internal Server Error:**
+    ```json
+    {
+      "error": "An error occurred processing the buy request"
+    }
+    ```
 
-## Prediction & User Management Service
+---
 
-**POST /api/users/register**
+### Endpoint: `/api/users/sell`
+- **Method**: `POST`
+- **Description**: Processes a stock sell request.
+- **Received Data:**
+    ```json
+    {
+      "user_id": "string",
+      "symbol": "string",
+      "quantity": "number"
+      // Additional fields if any
+    }
+    ```
 
-```json
-{
-  "name": "Jason Statham",
-  "email": "jasontop123@gmail.com",
-  "password": "password123"
-}
+**Responses:**
+- **200 OK:**
+    ```json
+    {
+      "message": "Stock sold successfully",
+      "transaction_id": "string"
+    }
+    ```
+- **400 Bad Request:**
+    ```json
+    {
+      "error": "Invalid input data"
+    }
+    ```
+- **500 Internal Server Error:**
+    ```json
+    {
+      "error": "An error occurred processing the sell request"
+    }
+    ```
 
-
-```
-
-
-**POST /api/users/login**
-
-```json
-{
-  "email": "jasontop123@gmail.com",
-  "password": "password123"
-}
-
-
-```
-**POST /api/predict**
-```json
-{
-  "symbol": "AAPL",
-  "data": [
-    { "date": "2024-09-18", "price": 150.25 },
-    { "date": "2024-09-17", "price": 149.30 }
-  ]
-}
-
-
-
-```
-## Stock Data Service
-
-**GET /api/stocks/history**
-
-```json
-{
-  "symbol": "Apple"
-}
-
-```
-
-**POST /api/stocks/cache/clear**
-
-```json
-{
-  "symbol": "Tesla"
-}
-
-```
 
 
 
 ## Deployment and Scaling
 
-* Containerization: Each microservice will be packaged into Docker containers for consistent deployment across various environments.
-* Orchestration:Kubernetes will be used to manage the deployment, scaling, and load balancing of the containers. This ensures that the services are highly available and can scale efficiently based on demand, such as during high traffic for stock data requests or predictions.
+### Build the Docker Images
+Use Docker Compose to build all the Docker images for the services:
+```bash
+docker-compose build
+```
+
+### Start the Services
+Start all the services defined in the docker-compose.yml file:
+```bash
+docker-compose up
+```
+
+### Verify That the Services Are Running
+Check the status of the containers:
+```bash
+docker-compose ps
+```
+# Circuit Breaker Pattern
+The Circuit Breaker Pattern helps prevent cascading failures by detecting repetitive errors in service calls. This pattern isolates failing services temporarily, ensuring that issues in the Prediction and Stock Data Services do not impact the entire system. The API Gateway applies circuit breaker policies to improve resilience and maintain stability.
+
+---
+
+# ELK Stack
+The ELK Stack — Elasticsearch, Logstash, and Kibana — provides centralized logging and monitoring across services. Elasticsearch stores logs, Logstash collects logs from each service, and Kibana visualizes them. This stack enables real-time monitoring and simplifies troubleshooting, ensuring efficient system performance and quick issue resolution.
+
+---
+
+# Two-Phase Commit for Transaction Consistency
+The Two-Phase Commit protocol ensures consistency in distributed transactions across services. By using a two-step process (Prepare and Commit), this protocol guarantees that transactions either complete successfully across all services or roll back entirely, maintaining data integrity within Prediction and Stock Data Services.
+
+---
+
+# Consistent Hashing for Cache
+Consistent Hashing in Redis enables even distribution of cached data across nodes, reducing cache misses and improving response times. This technique helps maintain a scalable caching layer, enhancing the system's ability to handle high transaction volumes with optimal performance.
+
+---
+
+# Cache High Availability
+Cache High Availability is achieved through a master-slave setup in Redis, providing redundancy. In case of node failure, the system switches to replica nodes, ensuring uninterrupted cache access and improved reliability for frequent requests.
+
+---
+
+# Data Warehouse and ETL
+The Data Warehouse and ETL process consolidates data across services, supporting advanced analytics and reporting. This setup enables data-driven insights for performance monitoring and strategic decision-making, enhancing service quality and predictive accuracy.

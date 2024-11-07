@@ -101,7 +101,8 @@ def predict_stock(symbol):
     inserted_data = prediction_collection.insert_one(prediction_data)
     prediction_data["_id"] = str(inserted_data.inserted_id)
 
-    return jsonify(prediction_data)
+    return jsonify(prediction_data), 200, {'Content-Type': 'application/json'}
+
 
 # Endpoint to store transaction details
 @app.route('/api/transactions/store', methods=['POST'])
