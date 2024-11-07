@@ -232,7 +232,6 @@ Real-world examples of similar systems using microservices:
       "user_id": "string",
       "name": "string",
       "email": "string"
-      // Additional profile information
     }
     ```
 - **401 Unauthorized:**
@@ -253,7 +252,6 @@ Real-world examples of similar systems using microservices:
     {
       "name": "string",
       "email": "string"
-      // Fields to update
     }
     ```
 
@@ -288,7 +286,6 @@ Real-world examples of similar systems using microservices:
       "user_id": "string",
       "symbol": "string",
       "quantity": "number"
-      // Additional fields if any
     }
     ```
 
@@ -324,7 +321,6 @@ Real-world examples of similar systems using microservices:
       "user_id": "string",
       "symbol": "string",
       "quantity": "number"
-      // Additional fields if any
     }
     ```
 
