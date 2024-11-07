@@ -16,7 +16,8 @@ Real-world examples of similar systems using microservices:
 
 
 ## Service Boundaries
-![Scheme](./images/scheme_x.png)
+![Scheme](./images/scheme_xx.png)
+
 ![Scheme](./images/scheme_y.png)
 
 * **Stock Prediction Service:** Fetches historical stock data from an external API and Uses a machine learning model to generate "buy" or "sell" signals based on historical stock data.
